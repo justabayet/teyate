@@ -2,7 +2,7 @@ import './App.css'
 import HomePage from './HomePage'
 import MyComponent from './MyComponent'
 import ParticipantPage from './ParticipantPage'
-import { useSessionId } from './useParticipantMode'
+import { useSessionId } from './useSessionId'
 
 function App() {
   const sessionId = useSessionId()

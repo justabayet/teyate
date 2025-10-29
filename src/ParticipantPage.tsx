@@ -1,4 +1,4 @@
-import { useSessionId } from "./useParticipantMode";
+import { useSessionId } from "./useSessionId";
 
 
 function ParticipantPage() {
