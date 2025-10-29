@@ -2,10 +2,12 @@ import './App.css'
 import HomePage from './HomePage'
 import MyComponent from './MyComponent'
 import ParticipantPage from './ParticipantPage'
+import DirectorPage from './DirectorPage'
 import { useSessionId } from './useSessionId'
+import { AuthProvider, useAuth } from './auth'
 
-function App() {
-  const sessionId = useSessionId()
+function AppContent({ sessionId }: { sessionId: string | null }) {
+  const { user } = useAuth();
 
   if (sessionId) {
     return (
@@ -13,7 +15,16 @@ function App() {
         <MyComponent />
         <ParticipantPage />
       </>
-    )
+    );
+  }
+
+  if (user) {
+    return (
+      <>
+        <MyComponent />
+        <DirectorPage />
+      </>
+    );
   }
 
   return (
@@ -21,7 +32,17 @@ function App() {
       <MyComponent />
       <HomePage />
     </>
-  )
+  );
+}
+
+function App() {
+  const sessionId = useSessionId()
+
+  return (
+    <AuthProvider>
+      <AppContent sessionId={sessionId} />
+    </AuthProvider>
+  );
 }
 
 export default App

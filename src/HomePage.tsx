@@ -1,9 +1,12 @@
 
 
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { auth } from './firebase';
+import { useAuth } from './auth';
 
 function HomePage() {
+    const { user } = useAuth();
+
     const handleLogin = async () => {
         const provider = new GoogleAuthProvider();
         try {
@@ -15,10 +18,21 @@ function HomePage() {
         }
     };
 
+    const handleSignOut = async () => {
+        await signOut(auth);
+    }
+
     return (
         <div>
             <h1>Welcome to the Home Page</h1>
-            <button onClick={handleLogin}>Log in with Google</button>
+            {user ? (
+                <div>
+                    <div>Signed in as: {user.email}</div>
+                    <button onClick={handleSignOut}>Sign out</button>
+                </div>
+            ) : (
+                <button onClick={handleLogin}>Log in with Google</button>
+            )}
         </div>
     );
 }
