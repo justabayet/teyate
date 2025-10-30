@@ -30,6 +30,8 @@ import {
     QuestionMark as QuestionIcon
 } from '@mui/icons-material';
 
+import { useNavigate } from 'react-router-dom';
+
 type Answer = { id: string; text: string };
 type Question = { id: string; text: string; answers: Answer[] };
 type Preset = { id: string; name: string; directorId: string; questions?: Question[] };
@@ -41,6 +43,8 @@ function DirectorPage() {
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (!user) return;
@@ -194,10 +198,13 @@ function DirectorPage() {
                     </Button>
                 </Box>
 
-                <Box sx={{ mt: 2, display: 'grid', gap: 3, gridTemplateColumns: '1fr' }}>
+                <Box sx={{ mt: 2, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' } }}>
                     {presets.map((preset) => (
-                        <Card key={preset.id} sx={{ cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 6 } }} onClick={() => window.location.assign(`/presets/${preset.id}`)}>
-                            <CardContent>
+                        <Card key={preset.id} sx={{ transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 6 } }}>
+                            <CardContent
+                                sx={{ cursor: 'pointer' }}
+                                onClick={() => navigate(`/presets/${preset.id}`)}
+                            >
                                 <Typography variant="h6" gutterBottom>
                                     {preset.name}
                                 </Typography>
@@ -210,7 +217,7 @@ function DirectorPage() {
                                     </Typography>
                                 </Box>
                             </CardContent>
-                            {/* <CardActions>
+                            <CardActions>
                                 <IconButton
                                     size="small"
                                     onClick={e => { e.stopPropagation(); addQuestion(preset.id); }}
@@ -234,7 +241,7 @@ function DirectorPage() {
                                 >
                                     <DeleteIcon />
                                 </IconButton>
-                            </CardActions> */}
+                            </CardActions>
                         </Card>
                     ))}
                 </Box>
