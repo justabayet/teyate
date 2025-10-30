@@ -27,7 +27,8 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     PlayArrow as StartIcon,
-    QuestionMark as QuestionIcon
+    QuestionMark as QuestionIcon,
+    Edit as EditIcon
 } from '@mui/icons-material';
 
 import { useNavigate } from 'react-router-dom';
@@ -220,10 +221,10 @@ function DirectorPage() {
                             <CardActions>
                                 <IconButton
                                     size="small"
-                                    onClick={e => { e.stopPropagation(); addQuestion(preset.id); }}
-                                    title="Add Question"
+                                    onClick={() => navigate(`/presets/${preset.id}`)}
+                                    title="Edit Preset"
                                 >
-                                    <QuestionIcon />
+                                    <EditIcon />
                                 </IconButton>
                                 <IconButton
                                     size="small"
@@ -246,48 +247,6 @@ function DirectorPage() {
                     ))}
                 </Box>
             </Box>
-
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>Add New Question</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Enter your question text. By default, it will have Yes/No answers.
-                    </DialogContentText>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Question"
-                        type="text"
-                        fullWidth
-                        variant="outlined"
-                        onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                                const target = e.target as HTMLInputElement;
-                                handleAddQuestion(selectedPreset!, target.value);
-                                target.value = '';
-                            }
-                        }}
-                    />
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button
-                        onClick={(e) => {
-                            const input = (e.target as HTMLElement)
-                                .closest('div')
-                                ?.querySelector('input');
-
-                            console.log(input);
-                            if (input) {
-                                handleAddQuestion(selectedPreset!, input.value);
-                                input.value = '';
-                            }
-                        }}
-                    >
-                        Add Question
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Container>
     );
 }

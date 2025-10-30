@@ -179,6 +179,7 @@ function PresetPage() {
                                 <Button
                                     key={answer.id}
                                     variant="outlined"
+                                    disabled
                                     fullWidth
                                     sx={{ mb: 1 }}
                                 >
