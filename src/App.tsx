@@ -9,6 +9,7 @@ import SessionsPage from './SessionsPage'
 import SessionPage from './SessionPage'
 import { useSessionId } from './useSessionId'
 import { AuthProvider, useAuth } from './auth'
+import Navigation from './Navigation';
 import theme from './theme';
 
 function AppContent() {
@@ -22,14 +23,22 @@ function AppContent() {
   return (
     <Routes>
       {user ? (
-        <>
-          <Route path="/" element={<DirectorPage />} />
-          <Route path="/presets" element={<DirectorPage />} />
-          <Route path="/presets/:presetId" element={<PresetPage />} />
-          <Route path="/sessions" element={<SessionsPage />} />
-          <Route path="/sessions/:sessionId" element={<SessionPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </>
+        <Route
+          element={
+            <Navigation>
+              <Routes>
+                <Route path="/" element={<Navigate to="/presets" replace />} />
+                <Route path="/presets" element={<DirectorPage />} />
+                <Route path="/presets/:presetId" element={<PresetPage />} />
+                <Route path="/sessions" element={<SessionsPage />} />
+                <Route path="/sessions/:sessionId" element={<SessionPage />} />
+                <Route path="*" element={<Navigate to="/presets" replace />} />
+              </Routes>
+            </Navigation>
+          }
+        >
+          <Route path="/*" />
+        </Route>
       ) : (
         <>
           <Route path="/" element={<HomePage />} />
