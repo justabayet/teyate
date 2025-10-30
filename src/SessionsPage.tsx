@@ -85,7 +85,7 @@ function SessionsPage() {
                         directorId: data.directorId,
                         isActive: data.isActive,
                         currentQuestionIndex: data.currentQuestionIndex,
-                        createdAt: data.createdAt.toDate(),
+                        createdAt: data.createdAt?.toDate() || new Date(),
                     });
                 });
                 setSessions(sessionsData.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));

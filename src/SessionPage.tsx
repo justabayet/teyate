@@ -64,7 +64,7 @@ function SessionPage() {
                         directorId: data.directorId,
                         isActive: data.isActive,
                         currentQuestionIndex: data.currentQuestionIndex,
-                        createdAt: data.createdAt.toDate(),
+                        createdAt: data.createdAt.toDate() || new Date(),
                     };
                     setSession(sessionData);
 
@@ -148,7 +148,9 @@ function SessionPage() {
         );
     }
 
-    const currentQuestion = preset.questions[session.currentQuestionIndex];
+    const currentQuestion = session.currentQuestionIndex === -1
+        ? preset.questions[session.currentQuestionIndex]
+        : null;
     const progress = ((session.currentQuestionIndex + 1) / preset.questions.length) * 100;
 
     const PreviewScreen = ({ icon, title }: { icon: React.ReactNode; title: string }) => (
@@ -170,10 +172,10 @@ function SessionPage() {
             </Typography>
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', p: 2 }}>
                 <Typography variant="h6" gutterBottom align="center">
-                    {currentQuestion.text}
+                    {currentQuestion?.text}
                 </Typography>
                 <Box sx={{ mt: 2 }}>
-                    {currentQuestion.answers.map(answer => (
+                    {currentQuestion?.answers.map(answer => (
                         <Button
                             key={answer.id}
                             variant="outlined"
