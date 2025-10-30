@@ -8,19 +8,18 @@ import {
     Typography,
     TextField,
     Button,
-    Card,
-    CardContent,
-    CardActions,
     IconButton,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogContentText,
     DialogActions,
+    Card,
+    CardContent,
+    CardActions,
     List,
     ListItem,
     ListItemText,
-    Divider,
     CircularProgress,
     Alert,
 } from '@mui/material';
@@ -195,49 +194,33 @@ function DirectorPage() {
                     </Button>
                 </Box>
 
-                <Box
-                    sx={{
-                        display: 'grid',
-                        gap: 3,
-                        gridTemplateColumns: {
-                            xs: '1fr',
-                            md: 'repeat(2, 1fr)',
-                            lg: 'repeat(3, 1fr)'
-                        }
-                    }}
-                >
-                    {presets.map(preset => (
-                        <Card key={preset.id}>
+                <Box sx={{ mt: 2, display: 'grid', gap: 3, gridTemplateColumns: '1fr' }}>
+                    {presets.map((preset) => (
+                        <Card key={preset.id} sx={{ cursor: 'pointer', transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 6 } }} onClick={() => window.location.assign(`/presets/${preset.id}`)}>
                             <CardContent>
                                 <Typography variant="h6" gutterBottom>
                                     {preset.name}
                                 </Typography>
-
-                                <List dense>
-                                    {preset.questions?.map((q, index) => (
-                                        <ListItem key={q.id}>
-                                            <ListItemText
-                                                primary={`${index + 1}. ${q.text}`}
-                                                secondary={`Answers: ${q.answers.map(a => a.text).join(', ')}`}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
+                                    <Typography variant="body2" color="text.secondary">
+                                        {preset.questions ? preset.questions.length : 0} questions
+                                    </Typography>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Last edited: N/A
+                                    </Typography>
+                                </Box>
                             </CardContent>
-
-                            <Divider />
-
-                            <CardActions>
+                            {/* <CardActions>
                                 <IconButton
                                     size="small"
-                                    onClick={() => addQuestion(preset.id)}
+                                    onClick={e => { e.stopPropagation(); addQuestion(preset.id); }}
                                     title="Add Question"
                                 >
                                     <QuestionIcon />
                                 </IconButton>
                                 <IconButton
                                     size="small"
-                                    onClick={() => startSession(preset.id)}
+                                    onClick={e => { e.stopPropagation(); startSession(preset.id); }}
                                     color="primary"
                                     title="Start Session"
                                 >
@@ -245,13 +228,13 @@ function DirectorPage() {
                                 </IconButton>
                                 <IconButton
                                     size="small"
-                                    onClick={() => deletePreset(preset.id)}
+                                    onClick={e => { e.stopPropagation(); deletePreset(preset.id); }}
                                     color="error"
                                     title="Delete Preset"
                                 >
                                     <DeleteIcon />
                                 </IconButton>
-                            </CardActions>
+                            </CardActions> */}
                         </Card>
                     ))}
                 </Box>
