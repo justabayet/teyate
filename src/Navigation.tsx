@@ -7,13 +7,9 @@ import {
     Typography,
     Button,
     IconButton,
-    Drawer,
-    List,
-    ListItem,
-    ListItemIcon,
-    ListItemText,
-    ListItemButton,
-    Divider,
+    Menu,
+    MenuItem,
+    Stack,
 } from '@mui/material';
 import {
     Menu as MenuIcon,
@@ -30,127 +26,121 @@ type NavigationProps = {
 function Navigation({ children }: NavigationProps) {
     const navigate = useNavigate();
     const location = useLocation();
-    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleSignOut = () => {
         auth.signOut();
         navigate('/');
+        handleMenuClose();
     };
 
-    const menuItems = [
-        { text: 'Presets', icon: <PresetsIcon />, path: '/presets' },
-        { text: 'Sessions', icon: <SessionsIcon />, path: '/sessions' },
-    ];
+    const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
 
-    // Get the current section (presets or sessions) for highlighting
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleNavigation = (path: string) => {
+        navigate(path);
+        handleMenuClose();
+    };
+
     const currentSection = location.pathname.split('/')[1] || 'presets';
 
     return (
-        <Box sx={{ display: 'flex' }}>
-            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <AppBar position="fixed">
                 <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={() => setDrawerOpen(v => !v)}
-                        sx={{ mr: 2, display: { sm: 'none' } }}
+                    <Typography
+                        variant="h5"
+                        component="div"
+                        fontWeight={'bold'}
+                        sx={{
+                            flexGrow: { xs: 1, md: 0 },
+                            mr: { md: 4 }
+                        }}
                     >
-                        <MenuIcon />
-                    </IconButton>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         Teyate
                     </Typography>
+
+                    {/* Desktop navigation */}
+                    <Stack
+                        direction="row"
+                        spacing={2}
+                        sx={{
+                            display: { xs: 'none', md: 'flex' },
+                            flexGrow: 1
+                        }}
+                    >
+                        <Button
+                            color="inherit"
+                            onClick={() => handleNavigation('/sessions')}
+                            startIcon={<SessionsIcon />}
+                            variant={'text'}
+                        >
+                            <Typography fontWeight={currentSection === 'sessions' ? 'bold' : 'normal'}>Sessions</Typography>
+                        </Button>
+                        <Button
+                            color="inherit"
+                            onClick={() => handleNavigation('/presets')}
+                            startIcon={<PresetsIcon />}
+                            variant={'text'}
+                        >
+                            <Typography fontWeight={currentSection === 'presets' ? 'bold' : 'normal'}>Presets</Typography>
+                        </Button>
+                    </Stack>
+
+                    {/* Desktop logout button */}
                     <Button
                         color="inherit"
                         onClick={handleSignOut}
                         startIcon={<LogoutIcon />}
+                        sx={{ display: { xs: 'none', md: 'flex' } }}
                     >
                         Sign Out
                     </Button>
+
+                    {/* Mobile menu button */}
+                    <IconButton
+                        color="inherit"
+                        edge="end"
+                        onClick={handleMenuClick}
+                        sx={{ display: { xs: 'flex', md: 'none' } }}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+
+                    {/* Mobile menu */}
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={Boolean(anchorEl)}
+                        onClose={handleMenuClose}
+                        sx={{ display: { xs: 'block', md: 'none' } }}
+                    >
+                        <MenuItem onClick={() => handleNavigation('/sessions')}>
+                            <SessionsIcon sx={{ mr: 1 }} /> Sessions
+                        </MenuItem>
+                        <MenuItem onClick={() => handleNavigation('/presets')}>
+                            <PresetsIcon sx={{ mr: 1 }} /> Presets
+                        </MenuItem>
+                        <MenuItem onClick={handleSignOut}>
+                            <LogoutIcon sx={{ mr: 1 }} /> Sign Out
+                        </MenuItem>
+                    </Menu>
                 </Toolbar>
             </AppBar>
-
-            {/* Permanent drawer for larger screens */}
-            <Drawer
-                variant="permanent"
-                sx={{
-                    display: { xs: 'none', sm: 'block' },
-                    '& .MuiDrawer-paper': {
-                        width: 240,
-                        boxSizing: 'border-box',
-                    },
-                }}
-                open
-            >
-                <Toolbar /> {/* Spacer for AppBar */}
-                <Box sx={{ overflow: 'auto' }}>
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem key={item.text} disablePadding>
-                                <ListItemButton
-                                    selected={currentSection === item.path.slice(1)}
-                                    onClick={() => navigate(item.path)}
-                                >
-                                    <ListItemIcon>
-                                        {item.icon}
-                                    </ListItemIcon>
-                                    <ListItemText primary={item.text} />
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
-                    </List>
-                    <Divider />
-                </Box>
-            </Drawer>
-
-            {/* Temporary drawer for mobile */}
-            <Drawer
-                variant="temporary"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                sx={{
-                    display: { xs: 'block', sm: 'none' },
-                    '& .MuiDrawer-paper': {
-                        width: 240,
-                        boxSizing: 'border-box',
-                    },
-                }}
-            >
-                <Toolbar /> {/* Spacer for AppBar */}
-                <Box sx={{ overflow: 'auto' }}>
-                    <List>
-                        {menuItems.map((item) => (
-                            <ListItem key={item.text} disablePadding>
-                                <ListItemButton
-                                    selected={currentSection === item.path.slice(1)}
-                                    onClick={() => {
-                                        navigate(item.path);
-                                        setDrawerOpen(false);
-                                    }}
-                                >
-                                    <ListItemIcon>
-                                        {item.icon}
-                                    </ListItemIcon>
-                                    <ListItemText primary={item.text} />
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
-                    </List>
-                    <Divider />
-                </Box>
-            </Drawer>
 
             <Box
                 component="main"
                 sx={{
                     flexGrow: 1,
                     p: 3,
-                    width: { sm: `calc(100% - 240px)` },
-                    minHeight: '100vh',
+                    mt: 8,
                     backgroundColor: 'grey.50'
                 }}
             >
-                <Toolbar /> {/* Spacer for AppBar */}
                 {children}
             </Box>
         </Box>
