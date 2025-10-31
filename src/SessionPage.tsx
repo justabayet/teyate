@@ -127,7 +127,7 @@ function SessionPage() {
         <Paper sx={{ width: '60%', p: 2, position: 'relative', height: '400px', bgcolor: '#222', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
 
 
-            <Box sx={{ position: 'absolute', top: 4, left: 4, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ position: 'absolute', top: 4, left: 8, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
                 <Typography variant="subtitle1" align="center">Projector {isLive ? 'Live' : 'Preview'}</Typography>
                 {isLive && (<Box component="span" sx={{ display: 'block', width: 10, height: 10, bgcolor: 'error.main', borderRadius: '50%', boxShadow: '0 0 6px rgba(255,0,0,0.6)' }} aria-hidden="true" />)}
             </Box>
@@ -150,7 +150,7 @@ function SessionPage() {
     const PhonePreview = ({ isLive = false, question }: { isLive?: boolean, question: Question | null }) => (
         <Paper sx={{ width: '40%', fontSize: '0.1rem', position: 'relative', p: 2, height: '400px', bgcolor: '#f5f5f5', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
 
-            <Box sx={{ position: 'absolute', top: 4, left: 4, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ position: 'absolute', top: 4, left: 8, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 1 }}>
                 <Typography variant="subtitle1" align="center">Phone {isLive ? 'Live' : 'Preview'}</Typography>
                 {isLive && (<Box component="span" sx={{ display: 'block', width: 10, height: 10, bgcolor: 'error.main', borderRadius: '50%', boxShadow: '0 0 6px rgba(255,0,0,0.6)' }} aria-hidden="true" />)}
             </Box>
