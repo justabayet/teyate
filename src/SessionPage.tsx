@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
@@ -223,11 +223,8 @@ function SessionPage() {
                                 size="large"
                                 startIcon={<OpenInNewIcon />}
                                 sx={{ width: '100%' }}
-                                onClick={() => {
-                                    window.open(`/projector/${session.id}`, "_blank")
-                                }}
                             >
-                                Open Projector Screen
+                                <Link to={`/projector/${session.id}`} target="_blank" rel="noopener noreferrer">Open Projector Screen</Link>
                             </Button>
                         </Paper>
 
