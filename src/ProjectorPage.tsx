@@ -4,7 +4,8 @@ import { useParams } from 'react-router-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
-import { getQuestion } from './questions';
+import { getQuestion, WELCOME_SCREEN_INDEX } from './questions';
+import QRCode from './QRCode';
 
 type Answer = { id: string; text: string };
 type Question = { id: string; text: string; answers: Answer[] };
@@ -18,6 +19,8 @@ const ProjectorPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [preset, setPreset] = useState<Preset | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number | null>(null);
+
+    const isWelcomeScreen = currentQuestionIndex === WELCOME_SCREEN_INDEX;
 
     useEffect(() => {
         if (!sessionId || !user) return;
@@ -77,6 +80,15 @@ const ProjectorPage: React.FC = () => {
             <Typography variant="h2" align="center" sx={{ maxWidth: '90%' }}>
                 {currentQuestion?.text || 'Waiting for question...'}
             </Typography>
+            {
+                isWelcomeScreen ?
+                    (
+                        <div>
+                            <QRCode url={window.location.href} />
+                        </div>
+                    ) : null
+            }
+
         </div>
     );
 };

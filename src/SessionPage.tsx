@@ -18,11 +18,10 @@ import {
 } from '@mui/material';
 import {
     ArrowDownward,
-    PlayArrow as PlayIcon,
-    Stop as StopIcon,
     OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
-import { END_SCREEN_INDEX, getQuestion, SHOW_RESULTS_INDEX, WAITING_SCREEN_INDEX } from './questions';
+import { END_SCREEN_INDEX, getQuestion, WAITING_SCREEN_INDEX, WELCOME_SCREEN_INDEX } from './questions';
+import QRCode from './QRCode';
 
 type Answer = { id: string; text: string };
 export type Question = { id: string; text: string; answers: Answer[] };
@@ -124,7 +123,7 @@ function SessionPage() {
     const currentPreviewQuestion = getQuestion(selectedIndex, preset?.questions)
 
 
-    const ProjectorPreview = ({ isLive = false, question }: { isLive?: boolean, question: Question | null }) => (
+    const ProjectorPreview = ({ isLive = false, question, index }: { isLive?: boolean, question: Question | null, index: number | null }) => (
         <Paper sx={{ width: '60%', p: 2, position: 'relative', height: '400px', bgcolor: '#222', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
 
 
@@ -133,9 +132,18 @@ function SessionPage() {
                 {isLive && (<Box component="span" sx={{ display: 'block', width: 10, height: 10, bgcolor: 'error.main', borderRadius: '50%', boxShadow: '0 0 6px rgba(255,0,0,0.6)' }} aria-hidden="true" />)}
             </Box>
 
-            <Typography variant="h5" align="center" sx={{ mb: 2 }}>
+            <Typography variant="h5" align="center">
                 {question?.text}
             </Typography>
+
+            {
+                index === WELCOME_SCREEN_INDEX ?
+                    (
+                        <div>
+                            <QRCode url={window.location.href} size={100} />
+                        </div>
+                    ) : null
+            }
         </Paper>
     );
 
@@ -165,29 +173,36 @@ function SessionPage() {
                 <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '2fr 2fr' } }}>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Typography variant="h5" gutterBottom>{session?.name}</Typography>
+                        <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column' }}>
+                            <Typography variant="h5">{session?.name}</Typography>
                             <Typography variant="subtitle1">{preset?.name}</Typography>
                         </Paper>
 
-                        <Paper sx={{ p: 3, minHeight: 300, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Paper sx={{ p: 3, minHeight: 300, display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Typography variant="h5" gutterBottom>Control</Typography>
 
-                            <Button
+                            {/* <Button
                                 variant="outlined"
                                 color="success"
                                 size="large"
-                                startIcon={<PlayIcon />}
                                 sx={{ width: '100%' }}
                                 onClick={() => { setSelectedIndex(SHOW_RESULTS_INDEX) }}
                             >
                                 Show Results
+                            </Button> */}
+                            <Button
+                                variant="outlined"
+                                color="success"
+                                size="large"
+                                sx={{ width: '100%' }}
+                                onClick={() => { setSelectedIndex(WELCOME_SCREEN_INDEX) }}
+                            >
+                                Show Welcome Screen
                             </Button>
                             <Button
                                 variant="outlined"
                                 color="warning"
                                 size="large"
-                                startIcon={<PlayIcon />}
                                 sx={{ width: '100%' }}
                                 onClick={() => { setSelectedIndex(WAITING_SCREEN_INDEX) }}
                             >
@@ -197,7 +212,6 @@ function SessionPage() {
                                 variant="outlined"
                                 color="error"
                                 size="large"
-                                startIcon={<StopIcon />}
                                 sx={{ width: '100%' }}
                                 onClick={() => { setSelectedIndex(END_SCREEN_INDEX) }}
                             >
@@ -218,6 +232,7 @@ function SessionPage() {
                         </Paper>
 
                         <Paper sx={{ p: 3, height: 500, display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+                            <Typography variant="h5" gutterBottom>Questions</Typography>
                             <List>
                                 {preset.questions.map((question, idx) => (
                                     <ListItem key={question.id} disablePadding sx={{ mb: 1 }}>
@@ -238,7 +253,7 @@ function SessionPage() {
                     {/* Preview Section */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, width: '100%' }}>
-                            <ProjectorPreview question={currentPreviewQuestion} />
+                            <ProjectorPreview question={currentPreviewQuestion} index={selectedIndex} />
                             <PhonePreview question={currentPreviewQuestion} />
                         </Box>
 
@@ -259,19 +274,17 @@ function SessionPage() {
                         </Button>
 
                         <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0, width: '100%' }}>
-                            <ProjectorPreview isLive question={currentLiveQuestion} />
+                            <ProjectorPreview isLive question={currentLiveQuestion} index={session?.currentQuestionIndex} />
                             <PhonePreview isLive question={currentLiveQuestion} />
                         </Box>
                     </Box>
 
 
-                    {/* Data Section */}
-                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {/* <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Typography variant="h5" gutterBottom>Data</Typography>
                         <Typography>Expected users: <b>?</b></Typography>
                         <Typography>Answers received: <b>?</b></Typography>
-                        {/* TODO: Wire up real data */}
-                    </Paper>
+                    </Paper> */}
                 </Box>
             </Box>
         </Container>

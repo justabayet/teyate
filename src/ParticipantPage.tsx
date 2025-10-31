@@ -1,17 +1,18 @@
-import { useSessionId } from "./useSessionId";
 import { useEffect, useState } from "react";
-import { doc, onSnapshot, getDoc, Timestamp, collection, addDoc } from 'firebase/firestore';
+import { doc, onSnapshot, getDoc, Timestamp, collection, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import {
     Container,
     Box,
     Typography,
     Button,
-    Paper,
     CircularProgress,
     Stack,
     Alert
 } from '@mui/material';
+import { getQuestion } from "./questions";
+import { useParams } from "react-router-dom";
+import { useAuth } from "./auth";
 
 interface Answer {
     id: string;
@@ -38,12 +39,14 @@ interface Session {
     presetId: string;
 }
 
+const USER_ANONYMOUS_ID = `anonymous_${Math.random().toString(36).substr(2, 9)}`;
 function ParticipantPage() {
-    const sessionId = useSessionId();
+    const { sessionId } = useParams();
+    const { user } = useAuth();
+    const userId = user?.uid || USER_ANONYMOUS_ID;
     const [session, setSession] = useState<Session | null>(null);
     const [preset, setPreset] = useState<Preset | null>(null);
     const [loading, setLoading] = useState(true);
-    const [answered, setAnswered] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -73,16 +76,22 @@ function ParticipantPage() {
         return () => unsub();
     }, [sessionId]);
 
+    const [selectedAnswerId, setSelectedAnswerId] = useState<string | null>(null);
+
     const submitAnswer = async (answerId: string) => {
-        if (!sessionId) return;
+        if (!sessionId || !session || !userId) return;
+        setSelectedAnswerId(answerId)
         try {
-            await addDoc(collection(db, 'sessions', sessionId, 'responses'), {
+            const sessions = collection(db, 'sessions');
+            const questionCollection = collection(sessions, sessionId, 'questions');
+            const respondantCollection = collection(questionCollection, (session.currentQuestionIndex || 0).toString(), 'respondants');
+            await setDoc(doc(respondantCollection, userId), {
                 questionIndex: session?.currentQuestionIndex,
                 answerId,
                 createdAt: new Date()
             });
-            setAnswered(true);
-        } catch {
+        } catch (e) {
+            console.log(e)
             setError('Failed to submit answer. Please try again.');
         }
     };
@@ -127,26 +136,8 @@ function ParticipantPage() {
         );
     }
 
-    if (!session.isOpen) {
-        return (
-            <Container maxWidth="sm">
-                <Box sx={{ py: 8, textAlign: 'center' }}>
-                    <Typography variant="h4" gutterBottom>
-                        Thank You for Participating
-                    </Typography>
-                    <Typography color="text.secondary">
-                        This session has ended.
-                    </Typography>
-                </Box>
-            </Container>
-        );
-    }
-
     const currentIndex = session.currentQuestionIndex;
-    const question = currentIndex !== null ? preset?.questions?.[currentIndex] : null;
-    const endAt = session.questionEndAt?.toDate();
-    const now = new Date();
-    const isTimeUp = endAt && now > endAt;
+    const question = getQuestion(currentIndex, preset?.questions);
 
     if (currentIndex === null || !question) {
         return (
@@ -155,65 +146,33 @@ function ParticipantPage() {
                     <Typography variant="h5" gutterBottom>
                         Waiting for the Next Question
                     </Typography>
-                    <Typography color="text.secondary">
-                        The director will start the next question shortly.
-                    </Typography>
                 </Box>
             </Container>
         );
     }
 
-    if (isTimeUp) {
-        return (
-            <Container maxWidth="sm">
-                <Box sx={{ py: 8, textAlign: 'center' }}>
-                    <Typography variant="h5" gutterBottom>
-                        Time's Up!
-                    </Typography>
-                    <Typography color="text.secondary">
-                        Please wait for the next question.
-                    </Typography>
-                </Box>
-            </Container>
-        );
-    }
+
 
     return (
-        <Container maxWidth="sm">
-            <Paper elevation={2} sx={{ mt: 4, p: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                    {question.text}
-                </Typography>
+        <div style={{ backgroundColor: "#fff", color: "#111", width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <Typography variant="h5" align="center" sx={{ maxWidth: '90%' }}>
+                {question.text || 'Waiting for question...'}
+            </Typography>
 
-                {answered ? (
-                    <Alert severity="success" sx={{ mt: 2 }}>
-                        Answer submitted successfully! Waiting for the next question.
-                    </Alert>
-                ) : (
-                    <Stack spacing={2} sx={{ mt: 3 }}>
-                        {question.answers?.map((answer) => (
-                            <Button
-                                key={answer.id}
-                                variant="outlined"
-                                size="large"
-                                fullWidth
-                                onClick={() => submitAnswer(answer.id)}
-                            >
-                                {answer.text}
-                            </Button>
-                        ))}
-                    </Stack>
-                )}
-
-                {endAt && (
-                    <Box sx={{ mt: 3, textAlign: 'center' }}>
-                        <Typography color="text.secondary">
-                            Ends at: {endAt.toLocaleTimeString()}
-                        </Typography>
-                    </Box>
-                )}
-            </Paper>
-        </Container>
+            <Stack spacing={2} sx={{ mt: 3, maxWidth: '90%' }}>
+                {question.answers?.map((answer) => (
+                    <Button
+                        key={answer.id}
+                        variant={selectedAnswerId === answer.id ? 'contained' : 'outlined'}
+                        size="large"
+                        fullWidth
+                        onClick={() => submitAnswer(answer.id)}
+                    >
+                        {answer.text}
+                    </Button>
+                ))}
+            </Stack>
+        </div>
     );
 }
 

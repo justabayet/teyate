@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import './App.css'
 import LoginPage from './LoginPage';
@@ -7,7 +7,6 @@ import DirectorPage from './DirectorPage'
 import PresetPage from './PresetPage'
 import SessionsPage from './SessionsPage'
 import SessionPage from './SessionPage'
-import { useSessionId } from './useSessionId'
 import { AuthProvider, useAuth } from './auth'
 import Navigation from './Navigation';
 import theme from './theme';
@@ -15,7 +14,7 @@ import ProjectorPage from './ProjectorPage';
 
 function AppContent() {
   const { user } = useAuth();
-  const sessionId = useSessionId();
+  const { sessionId } = useParams();
 
   if (sessionId) {
     return <ParticipantPage />;
@@ -24,6 +23,7 @@ function AppContent() {
   return (
     <Routes>
       <Route path="/projector/:sessionId" element={<ProjectorPage />} />
+      <Route path="/participant/:sessionId" element={<ParticipantPage />} />
       {user ? (
         <Route
           element={
