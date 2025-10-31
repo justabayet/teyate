@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
 import {
@@ -72,8 +72,11 @@ function SessionsPage() {
         if (!user) return;
 
         // Subscribe to sessions
+        const sessionsCol = collection(db, 'sessions');
+        const q = query(sessionsCol, where('directorId', '==', user.uid));
+
         const unsubscribeSessions = onSnapshot(
-            collection(db, 'sessions'),
+            q,
             (snapshot) => {
                 const sessionsData: Session[] = [];
                 snapshot.forEach((doc) => {
@@ -98,8 +101,10 @@ function SessionsPage() {
         );
 
         // Subscribe to presets
+        const presetsCol = collection(db, 'presets');
+        const qPresets = query(presetsCol, where('directorId', '==', user.uid));
         const unsubscribePresets = onSnapshot(
-            collection(db, 'presets'),
+            qPresets,
             (snapshot) => {
                 const presetsData: Preset[] = [];
                 snapshot.forEach((doc) => {
