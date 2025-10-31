@@ -128,7 +128,7 @@ function SessionsPage() {
                 presetId: newSession.presetId,
                 directorId: user.uid,
                 isActive: false,
-                currentQuestionIndex: 0,
+                currentQuestionIndex: null,
                 createdAt: new Date(),
             });
             setDialogOpen(false);

@@ -9,17 +9,9 @@ import {
     TextField,
     Button,
     IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogContentText,
-    DialogActions,
     Card,
     CardContent,
     CardActions,
-    List,
-    ListItem,
-    ListItemText,
     CircularProgress,
     Alert,
 } from '@mui/material';
@@ -27,7 +19,6 @@ import {
     Add as AddIcon,
     Delete as DeleteIcon,
     PlayArrow as StartIcon,
-    QuestionMark as QuestionIcon,
     Edit as EditIcon
 } from '@mui/icons-material';
 
@@ -41,8 +32,6 @@ function DirectorPage() {
     const { user, loading } = useAuth();
     const [presets, setPresets] = useState<Preset[]>([]);
     const [newName, setNewName] = useState('');
-    const [openDialog, setOpenDialog] = useState(false);
-    const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const navigate = useNavigate();
@@ -100,35 +89,6 @@ function DirectorPage() {
         }
     };
 
-    const addQuestion = async (presetId: string) => {
-        setSelectedPreset(presetId);
-        setOpenDialog(true);
-    };
-
-    const handleAddQuestion = async (presetId: string, qText: string) => {
-        if (!qText) return;
-        try {
-            const docRef = doc(db, 'presets', presetId);
-            const snap = await getDoc(docRef);
-            const data = snap.data() || { questions: [] };
-            const questions = data.questions || [];
-            questions.push({
-                id: Date.now().toString(),
-                text: qText,
-                answers: [
-                    { id: 'a1', text: 'Yes' },
-                    { id: 'a2', text: 'No' }
-                ]
-            });
-            await updateDoc(docRef, { questions });
-            setOpenDialog(false);
-            console.log("Question added successfully");
-        } catch (e) {
-            console.log(e)
-            setError('Failed to add question');
-        }
-    };
-
     const deletePreset = async (presetId: string) => {
         try {
             await deleteDoc(doc(db, 'presets', presetId));
@@ -139,27 +99,45 @@ function DirectorPage() {
 
     const startSession = async (presetId: string) => {
         try {
-            const sessionRef = await addDoc(collection(db, 'sessions'), {
-                presetId,
-                directorId: user.uid,
-                isOpen: true,
-                currentQuestionIndex: null,
-                questionEndAt: null,
-                createdAt: new Date()
+            // Check for existing session with this preset and director
+            const sessionsCol = collection(db, 'sessions');
+            const q = query(sessionsCol, where('presetId', '==', presetId), where('directorId', '==', user.uid), where('isActive', '==', true));
+            const snap = await new Promise<any>((resolve, reject) => {
+                onSnapshot(q, (snapshot) => resolve(snapshot), reject);
             });
-
-            // Create a temporary input element to copy the URL
-            const input = document.createElement('input');
-            const url = window.location.origin + '?sessionId=' + sessionRef.id;
-            input.value = url;
-            document.body.appendChild(input);
-            input.select();
-            document.execCommand('copy');
-            document.body.removeChild(input);
-
-            setError('Session started! URL copied to clipboard.');
+            console.log(snap)
+            let sessionId = null;
+            if (snap && snap.docs && snap.docs.length > 0) {
+                sessionId = snap.docs[0].id;
+            }
+            if (sessionId) {
+                await updateDoc(doc(db, 'sessions', sessionId), { isActive: false });
+                navigate(`/sessions/${sessionId}`);
+                setError('Opened existing session.');
+            } else {
+                const sessionRef = await addDoc(sessionsCol, {
+                    presetId,
+                    directorId: user.uid,
+                    isActive: false,
+                    currentQuestionIndex: null,
+                    questionEndAt: null,
+                    name: "New Session",
+                    createdAt: new Date()
+                });
+                navigate(`/sessions/${sessionRef.id}`);
+                setError('Session started!');
+            }
         } catch {
-            setError('Failed to start session');
+            setError('Failed to start or open session');
+        }
+    };
+
+    const stopSession = async (sessionId: string) => {
+        try {
+            await updateDoc(doc(db, 'sessions', sessionId), { isOpen: false });
+            setError('Session stopped.');
+        } catch {
+            setError('Failed to stop session');
         }
     };
 
@@ -199,7 +177,7 @@ function DirectorPage() {
                     </Button>
                 </Box>
 
-                <Box sx={{ mt: 2, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' } }}>
+                <Box sx={{ mt: 2, display: 'grid', gap: 3, gridTemplateColumns: '1fr' }}>
                     {presets.map((preset) => (
                         <Card key={preset.id} sx={{ transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 6 } }}>
                             <CardContent

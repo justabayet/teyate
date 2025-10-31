@@ -10,10 +10,6 @@ import {
     Paper,
     Button,
     IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
     TextField,
     List,
     ListItem,
@@ -21,13 +17,10 @@ import {
     ListItemSecondaryAction,
     CircularProgress,
     Alert,
-
-    Divider,
 } from '@mui/material';
 import {
     Add as AddIcon,
     Delete as DeleteIcon,
-    Edit as EditIcon,
     Phone as PhoneIcon
 } from '@mui/icons-material';
 type Answer = { id: string; text: string };
@@ -41,9 +34,7 @@ function PresetPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
-    const [dialogData, setDialogData] = useState({ text: '', answers: ['Yes', 'No'] });
+    const [editData, setEditData] = useState<{ text: string; answers: string[] }>({ text: '', answers: ['Yes', 'No'] });
 
     useEffect(() => {
         if (!presetId) return;
@@ -71,25 +62,38 @@ function PresetPage() {
         return () => unsubscribe();
     }, [presetId, selectedQuestion]);
 
-    const handleAddQuestion = () => {
-        setDialogMode('add');
-        setDialogData({ text: '', answers: ['Yes', 'No'] });
-        setDialogOpen(true);
+    const handleAddQuestion = async () => {
+        if (!preset) return;
+        const newQuestion = {
+            id: Date.now().toString(),
+            text: 'New question',
+            answers: [
+                { id: 'a1', text: 'Yes' },
+                { id: 'a2', text: 'No' }
+            ]
+        };
+        const updatedQuestions = [...preset.questions, newQuestion];
+        try {
+            await updateDoc(doc(db, 'presets', preset.id), { questions: updatedQuestions });
+            setSelectedQuestion(newQuestion);
+            setEditData({ text: newQuestion.text, answers: newQuestion.answers.map(a => a.text) });
+        } catch {
+            setError('Failed to add question');
+        }
     };
 
-    const handleEditQuestion = (question: Question) => {
-        setDialogMode('edit');
-        setDialogData({
-            text: question.text,
-            answers: question.answers.map(a => a.text)
-        });
-        setSelectedQuestion(question);
-        setDialogOpen(true);
-    };
+    // When a question is selected, update editData to match
+    useEffect(() => {
+        if (selectedQuestion) {
+            setEditData({
+                text: selectedQuestion.text,
+                answers: selectedQuestion.answers.map(a => a.text)
+            });
+        }
+    }, [selectedQuestion]);
 
     const handleDeleteQuestion = async (questionId: string) => {
-        if (!preset || !window.confirm('Delete this question?')) return;
-
+        if (!preset) return;
         try {
             const updatedQuestions = preset.questions.filter(q => q.id !== questionId);
             await updateDoc(doc(db, 'presets', preset.id), {
@@ -103,38 +107,17 @@ function PresetPage() {
         }
     };
 
-    const handleSaveQuestion = async () => {
-        if (!preset || !dialogData.text || dialogData.answers.some(a => !a)) return;
-
-        try {
-            const updatedQuestions = [...preset.questions];
-            const questionData = {
-                id: dialogMode === 'add' ? Date.now().toString() : selectedQuestion!.id,
-                text: dialogData.text,
-                answers: dialogData.answers.map((text, index) => ({
-                    id: 'a' + (index + 1),
-                    text
-                }))
-            };
-
-            if (dialogMode === 'add') {
-                updatedQuestions.push(questionData);
-            } else {
-                const index = updatedQuestions.findIndex(q => q.id === selectedQuestion!.id);
-                if (index !== -1) {
-                    updatedQuestions[index] = questionData;
-                }
-            }
-
-            await updateDoc(doc(db, 'presets', preset.id), {
-                questions: updatedQuestions
-            });
-            setDialogOpen(false);
-            setSelectedQuestion(questionData);
-        } catch {
-            setError('Failed to save question');
-        }
-    };
+    // Auto-save on every edit for selected question
+    useEffect(() => {
+        if (!preset || !selectedQuestion) return;
+        if (!editData.text || editData.answers.some(a => !a)) return;
+        const updatedQuestions = preset.questions.map(q =>
+            q.id === selectedQuestion.id
+                ? { ...q, text: editData.text, answers: editData.answers.map((text, index) => ({ id: 'a' + (index + 1), text })) }
+                : q
+        );
+        updateDoc(doc(db, 'presets', preset.id), { questions: updatedQuestions }).catch(() => setError('Failed to save question'));
+    }, [editData, preset, selectedQuestion]);
 
     if (loading) {
         return (
@@ -156,46 +139,55 @@ function PresetPage() {
         );
     }
 
-    const PhonePreview = () => (
-        <Paper
-            sx={{
-                p: 2,
-                height: '600px',
-                width: '300px',
-                mx: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                bgcolor: '#f5f5f5'
-            }}
-        >
-            <Box sx={{ flex: 1, overflow: 'auto' }}>
-                {selectedQuestion ? (
-                    <>
-                        <Typography variant="h6" gutterBottom>
-                            {selectedQuestion.text}
+    const PhonePreview = () => {
+        let previewText = selectedQuestion ? selectedQuestion.text : '';
+        let previewAnswers = selectedQuestion ? selectedQuestion.answers : [];
+        // If editing, show live editData
+        if (selectedQuestion && editData && editData.text && editData.answers.length > 0) {
+            previewText = editData.text;
+            previewAnswers = editData.answers.map((text, index) => ({ id: 'a' + (index + 1), text }));
+        }
+        return (
+            <Paper
+                sx={{
+                    p: 2,
+                    height: '600px',
+                    width: '300px',
+                    mx: 'auto',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    bgcolor: '#f5f5f5'
+                }}
+            >
+                <Box sx={{ flex: 1, overflow: 'auto' }}>
+                    {selectedQuestion ? (
+                        <>
+                            <Typography variant="h6" gutterBottom>
+                                {previewText}
+                            </Typography>
+                            <Box sx={{ mt: 2 }}>
+                                {previewAnswers.map(answer => (
+                                    <Button
+                                        key={answer.id}
+                                        variant="outlined"
+                                        disabled
+                                        fullWidth
+                                        sx={{ mb: 1 }}
+                                    >
+                                        {answer.text}
+                                    </Button>
+                                ))}
+                            </Box>
+                        </>
+                    ) : (
+                        <Typography color="textSecondary" align="center">
+                            Select a question to preview
                         </Typography>
-                        <Box sx={{ mt: 2 }}>
-                            {selectedQuestion.answers.map(answer => (
-                                <Button
-                                    key={answer.id}
-                                    variant="outlined"
-                                    disabled
-                                    fullWidth
-                                    sx={{ mb: 1 }}
-                                >
-                                    {answer.text}
-                                </Button>
-                            ))}
-                        </Box>
-                    </>
-                ) : (
-                    <Typography color="textSecondary" align="center">
-                        Select a question to preview
-                    </Typography>
-                )}
-            </Box>
-        </Paper>
-    );
+                    )}
+                </Box>
+            </Paper>
+        );
+    };
 
     return (
         <Container maxWidth="lg">
@@ -205,25 +197,10 @@ function PresetPage() {
                 </Typography>
 
                 {error && (
-                    <Alert
-                        severity="error"
-                        onClose={() => setError(null)}
-                        sx={{ mb: 2 }}
-                    >
-                        {error}
-                    </Alert>
+                    <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>
                 )}
 
-                <Box
-                    sx={{
-                        display: 'grid',
-                        gap: 3,
-                        gridTemplateColumns: {
-                            xs: '1fr',
-                            md: '1fr 2fr 1fr'
-                        }
-                    }}
-                >
+                <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 2fr 1fr' } }}>
                     {/* Questions List */}
                     <Paper sx={{ p: 2, height: '600px', display: 'flex', flexDirection: 'column' }}>
                         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -236,30 +213,14 @@ function PresetPage() {
                             {preset.questions.map((question, index) => (
                                 <ListItem
                                     key={question.id}
-                                    component="div"
-                                    selected={selectedQuestion?.id === question.id}
                                     onClick={() => setSelectedQuestion(question)}
-                                    sx={{ cursor: 'pointer' }}
+                                    sx={{ cursor: 'pointer', bgcolor: selectedQuestion?.id === question.id ? 'action.selected' : undefined }}
                                 >
                                     <ListItemText
                                         primary={`${index + 1}. ${question.text}`}
-                                        sx={{
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap'
-                                        }}
+                                        sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                                     />
                                     <ListItemSecondaryAction>
-                                        <IconButton
-                                            edge="end"
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEditQuestion(question);
-                                            }}
-                                        >
-                                            <EditIcon fontSize="small" />
-                                        </IconButton>
                                         <IconButton
                                             edge="end"
                                             size="small"
@@ -277,34 +238,53 @@ function PresetPage() {
                         </List>
                     </Paper>
 
-                    {/* Selected Question */}
+                    {/* Selected Question / Edit Panel */}
                     <Paper sx={{ p: 3, height: '600px', display: 'flex', flexDirection: 'column' }}>
                         {selectedQuestion ? (
                             <>
-                                <Typography variant="h5" gutterBottom>
-                                    {selectedQuestion.text}
-                                </Typography>
-                                <Divider sx={{ my: 2 }} />
+                                <TextField
+                                    label="Question Text"
+                                    fullWidth
+                                    value={editData.text}
+                                    onChange={(e) => setEditData({ ...editData, text: e.target.value })}
+                                    sx={{ mb: 2 }}
+                                />
                                 <Typography variant="h6" gutterBottom>
                                     Answers
                                 </Typography>
-                                <List>
-                                    {selectedQuestion.answers.map((answer, index) => (
-                                        <ListItem key={answer.id} component="div">
-                                            <ListItemText
-                                                primary={`${index + 1}. ${answer.text}`}
-                                            />
-                                        </ListItem>
-                                    ))}
-                                </List>
+                                {editData.answers.map((answer, index) => (
+                                    <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                                        <TextField
+                                            size="small"
+                                            fullWidth
+                                            value={answer}
+                                            onChange={(e) => {
+                                                const newAnswers = [...editData.answers];
+                                                newAnswers[index] = e.target.value;
+                                                setEditData({ ...editData, answers: newAnswers });
+                                            }}
+                                        />
+                                        {editData.answers.length > 2 && (
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => {
+                                                    const newAnswers = editData.answers.filter((_, i) => i !== index);
+                                                    setEditData({ ...editData, answers: newAnswers });
+                                                }}
+                                            >
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        )}
+                                    </Box>
+                                ))}
+                                <Button
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setEditData({ ...editData, answers: [...editData.answers, ''] })}
+                                    sx={{ mt: 1 }}
+                                >
+                                    Add Answer
+                                </Button>
                                 <Box sx={{ mt: 'auto', display: 'flex', gap: 2 }}>
-                                    <Button
-                                        variant="outlined"
-                                        onClick={() => handleEditQuestion(selectedQuestion)}
-                                        startIcon={<EditIcon />}
-                                    >
-                                        Edit Question
-                                    </Button>
                                     <Button
                                         variant="outlined"
                                         color="error"
@@ -324,84 +304,11 @@ function PresetPage() {
 
                     {/* Phone Preview */}
                     <Box sx={{ position: 'relative' }}>
-                        <PhoneIcon
-                            sx={{
-                                position: 'absolute',
-                                top: -12,
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                color: 'primary.main'
-                            }}
-                        />
+                        <PhoneIcon sx={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', color: 'primary.main' }} />
                         <PhonePreview />
                     </Box>
                 </Box>
             </Box>
-
-            {/* Add/Edit Question Dialog */}
-            <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    {dialogMode === 'add' ? 'Add New Question' : 'Edit Question'}
-                </DialogTitle>
-                <DialogContent>
-                    <TextField
-                        autoFocus
-                        margin="dense"
-                        label="Question Text"
-                        fullWidth
-                        value={dialogData.text}
-                        onChange={(e) => setDialogData({ ...dialogData, text: e.target.value })}
-                    />
-                    <Typography variant="subtitle1" sx={{ mt: 2, mb: 1 }}>
-                        Answers
-                    </Typography>
-                    {dialogData.answers.map((answer, index) => (
-                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                            <TextField
-                                size="small"
-                                fullWidth
-                                value={answer}
-                                onChange={(e) => {
-                                    const newAnswers = [...dialogData.answers];
-                                    newAnswers[index] = e.target.value;
-                                    setDialogData({ ...dialogData, answers: newAnswers });
-                                }}
-                            />
-                            {dialogData.answers.length > 2 && (
-                                <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                        const newAnswers = dialogData.answers.filter((_, i) => i !== index);
-                                        setDialogData({ ...dialogData, answers: newAnswers });
-                                    }}
-                                >
-                                    <DeleteIcon />
-                                </IconButton>
-                            )}
-                        </Box>
-                    ))}
-                    <Button
-                        startIcon={<AddIcon />}
-                        onClick={() => setDialogData({
-                            ...dialogData,
-                            answers: [...dialogData.answers, '']
-                        })}
-                        sx={{ mt: 1 }}
-                    >
-                        Add Answer
-                    </Button>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
-                    <Button
-                        onClick={handleSaveQuestion}
-                        disabled={!dialogData.text || dialogData.answers.some(a => !a)}
-                        variant="contained"
-                    >
-                        Save
-                    </Button>
-                </DialogActions>
-            </Dialog>
         </Container>
     );
 }
