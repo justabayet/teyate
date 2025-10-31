@@ -140,7 +140,7 @@ function SessionPage() {
                 index === WELCOME_SCREEN_INDEX ?
                     (
                         <div>
-                            <QRCode url={window.location.href} size={100} />
+                            <QRCode url={`https://teyate.justabayet.com/#/participant/${sessionId}`} size={100} />
                         </div>
                     ) : null
             }
