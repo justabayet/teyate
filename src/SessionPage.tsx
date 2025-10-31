@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
 import {
@@ -35,6 +35,12 @@ type Session = {
     currentQuestionIndex: number;
     createdAt: Date;
 };
+type Respondant = {
+    id: string;
+    questionIndex: number;
+    answerId: string;
+    createdAt: Date;
+}
 
 function SessionPage() {
     const { sessionId } = useParams();
@@ -96,6 +102,36 @@ function SessionPage() {
 
         return () => unsubscribeSession();
     }, [sessionId]);
+
+    const [answersData, setAnswersData] = useState<Respondant[]>([]);
+
+    useEffect(() => {
+        if (sessionId == null || session?.currentQuestionIndex == null) return
+
+        const answersRef = collection(db,
+            'sessions', sessionId,
+            'questions', session.currentQuestionIndex.toString(),
+            'respondants'
+        );
+
+        const unsubscribeAnswers = onSnapshot(
+            answersRef,
+            (snapshot) => {
+                const answersData = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data() as Omit<Respondant, 'id'>,
+                }));
+                setAnswersData(answersData);
+            },
+            (error) => {
+                console.log(error);
+            }
+        );
+
+        return () => {
+            unsubscribeAnswers();
+        };
+    }, [sessionId, session?.currentQuestionIndex]);
 
 
     if (loading) {
@@ -167,7 +203,14 @@ function SessionPage() {
         </Paper>
     );
 
-    console.log(session)
+    const answersCount: { [answerId: string]: number } = {};
+    answersData.forEach(answer => {
+        if (answersCount[answer.answerId]) {
+            answersCount[answer.answerId] += 1;
+        } else {
+            answersCount[answer.answerId] = 1;
+        }
+    });
 
     return (
         <Container maxWidth="xl">
@@ -180,18 +223,45 @@ function SessionPage() {
                             <Typography variant="subtitle1">{preset?.name}</Typography>
                         </Paper>
 
+                        <Paper sx={{ p: 3, height: 500, display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+                            <Typography variant="h5" gutterBottom>Questions</Typography>
+                            <List>
+                                {preset.questions.map((question, idx) => (
+                                    <ListItem key={question.id} disablePadding sx={{ mb: 1 }}>
+                                        <ListItemButton
+                                            selected={selectedIndex === idx}
+                                            onClick={() => setSelectedIndex(idx)}
+                                            sx={{ borderRadius: 1, width: '100%' }}
+                                        >
+                                            <ListItemText primary={question.text} />
+                                        </ListItemButton>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Paper>
+
+
+
+                        <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <Typography variant="h5" gutterBottom>Results</Typography>
+
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                {currentLiveQuestion?.answers.map(answer => (
+                                    <Box key={answer.id} sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Button key={answer.id} variant="outlined" fullWidth disabled>
+                                            {answer.text}
+                                        </Button>
+
+                                        <Typography sx={{ ml: 2 }}>{answersCount[answer.id] || 0}</Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+                        </Paper>
+
+
                         <Paper sx={{ p: 3, minHeight: 300, display: 'flex', flexDirection: 'column', gap: 1 }}>
                             <Typography variant="h5" gutterBottom>Control</Typography>
 
-                            {/* <Button
-                                variant="outlined"
-                                color="success"
-                                size="large"
-                                sx={{ width: '100%' }}
-                                onClick={() => { setSelectedIndex(SHOW_RESULTS_INDEX) }}
-                            >
-                                Show Results
-                            </Button> */}
                             <Button
                                 variant="outlined"
                                 color="success"
@@ -229,23 +299,6 @@ function SessionPage() {
                                 <Link to={`/projector/${session.id}`} target="_blank" rel="noopener noreferrer">Open Projector Screen</Link>
                             </Button>
                         </Paper>
-
-                        <Paper sx={{ p: 3, height: 500, display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-                            <Typography variant="h5" gutterBottom>Questions</Typography>
-                            <List>
-                                {preset.questions.map((question, idx) => (
-                                    <ListItem key={question.id} disablePadding sx={{ mb: 1 }}>
-                                        <ListItemButton
-                                            selected={selectedIndex === idx}
-                                            onClick={() => setSelectedIndex(idx)}
-                                            sx={{ borderRadius: 1, width: '100%' }}
-                                        >
-                                            <ListItemText primary={question.text} />
-                                        </ListItemButton>
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Paper>
                     </Box>
 
 
@@ -277,13 +330,6 @@ function SessionPage() {
                             <PhonePreview isLive question={currentLiveQuestion} />
                         </Box>
                     </Box>
-
-
-                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <Typography variant="h5" gutterBottom>Data</Typography>
-                        <Typography>Expected users: <b>?</b></Typography>
-                        <Typography>Answers received: <b>?</b></Typography>
-                    </Paper>
                 </Box>
             </Box>
         </Container>
