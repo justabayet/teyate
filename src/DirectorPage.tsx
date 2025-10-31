@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
 import {
@@ -102,6 +102,7 @@ function DirectorPage() {
             // Check for existing session with this preset and director
             const sessionsCol = collection(db, 'sessions');
             const q = query(sessionsCol, where('presetId', '==', presetId), where('directorId', '==', user.uid), where('isActive', '==', true));
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const snap = await new Promise<any>((resolve, reject) => {
                 onSnapshot(q, (snapshot) => resolve(snapshot), reject);
             });
@@ -129,15 +130,6 @@ function DirectorPage() {
             }
         } catch {
             setError('Failed to start or open session');
-        }
-    };
-
-    const stopSession = async (sessionId: string) => {
-        try {
-            await updateDoc(doc(db, 'sessions', sessionId), { isOpen: false });
-            setError('Session stopped.');
-        } catch {
-            setError('Failed to stop session');
         }
     };
 
@@ -187,12 +179,9 @@ function DirectorPage() {
                                 <Typography variant="h6" gutterBottom>
                                     {preset.name}
                                 </Typography>
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 1 }}>
+                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                                     <Typography variant="body2" color="text.secondary">
                                         {preset.questions ? preset.questions.length : 0} questions
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        Last edited: N/A
                                     </Typography>
                                 </Box>
                             </CardContent>
