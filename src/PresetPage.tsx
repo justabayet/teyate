@@ -27,6 +27,7 @@ type Answer = { id: string; text: string };
 type Question = { id: string; text: string; answers: Answer[] };
 type Preset = { id: string; name: string; directorId: string; questions: Question[] };
 
+const QUESTION_NB_CHAR = 15
 function PresetPage() {
     const { presetId } = useParams();
     useAuth(); // Ensure user is authenticated
@@ -200,14 +201,12 @@ function PresetPage() {
                     <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>
                 )}
 
-                <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '1fr 2fr 1fr' } }}>
+                <Box sx={{ display: 'grid', gap: { xs: 1, md: 4 }, gridTemplateColumns: '1fr 2fr 1fr' }}>
                     {/* Questions List */}
                     <Paper sx={{ p: 2, height: '600px', display: 'flex', flexDirection: 'column' }}>
                         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="h6">Questions</Typography>
-                            <IconButton onClick={handleAddQuestion} color="primary" size="small">
-                                <AddIcon />
-                            </IconButton>
+                            <Typography variant="body2">{preset.questions.length}</Typography>
                         </Box>
                         <List sx={{ flex: 1, overflow: 'auto' }}>
                             {preset.questions.map((question, index) => (
@@ -217,7 +216,7 @@ function PresetPage() {
                                     sx={{ cursor: 'pointer', bgcolor: selectedQuestion?.id === question.id ? 'action.selected' : undefined }}
                                 >
                                     <ListItemText
-                                        primary={`${index + 1}. ${question.text}`}
+                                        primary={`${index + 1}. ${question.text.substring(0, QUESTION_NB_CHAR)}${question.text.length > QUESTION_NB_CHAR ? '...' : ''}`}
                                         sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                                     />
                                     <ListItemSecondaryAction>
@@ -235,16 +234,31 @@ function PresetPage() {
                                     </ListItemSecondaryAction>
                                 </ListItem>
                             ))}
+
+                            <ListItem
+                                key={'add-question'}
+                                onClick={() => handleAddQuestion()}
+                            // sx={{ cursor: 'pointer', bgcolor: selectedQuestion?.id === question.id ? 'action.selected' : undefined }}
+                            >
+                                <Button
+                                    startIcon={<AddIcon />}
+                                    onClick={() => setEditData({ ...editData, answers: [...editData.answers, ''] })}
+                                    sx={{ mt: 1 }}
+                                >
+                                    Question
+                                </Button>
+                            </ListItem>
                         </List>
                     </Paper>
 
                     {/* Selected Question / Edit Panel */}
-                    <Paper sx={{ p: 3, height: '600px', display: 'flex', flexDirection: 'column' }}>
+                    <Paper sx={{ p: 3, height: '600px', display: 'flex', flexDirection: 'column', minWidth: '300px' }}>
                         {selectedQuestion ? (
                             <>
                                 <TextField
                                     label="Question Text"
                                     fullWidth
+                                    multiline
                                     value={editData.text}
                                     onChange={(e) => setEditData({ ...editData, text: e.target.value })}
                                     sx={{ mb: 2 }}
@@ -282,7 +296,7 @@ function PresetPage() {
                                     onClick={() => setEditData({ ...editData, answers: [...editData.answers, ''] })}
                                     sx={{ mt: 1 }}
                                 >
-                                    Add Answer
+                                    Answer
                                 </Button>
                                 <Box sx={{ mt: 'auto', display: 'flex', gap: 2 }}>
                                     <Button

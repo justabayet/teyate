@@ -136,8 +136,7 @@ function Navigation({ children }: NavigationProps) {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 3,
-                    mt: 8,
+                    mt: 4,
                     backgroundColor: 'grey.50'
                 }}
             >
