@@ -84,7 +84,7 @@ const ProjectorPage: React.FC = () => {
                 isWelcomeScreen ?
                     (
                         <div>
-                            <QRCode url={`https://teyate.justabayet.com/#/participant/${sessionId}`} />
+                            <QRCode url={`${window.location.origin}/#/participant/${sessionId}`} />
                         </div>
                     ) : null
             }

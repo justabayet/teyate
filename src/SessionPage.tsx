@@ -140,7 +140,7 @@ function SessionPage() {
                 index === WELCOME_SCREEN_INDEX ?
                     (
                         <div>
-                            <QRCode url={`https://teyate.justabayet.com/#/participant/${sessionId}`} size={100} />
+                            <QRCode url={`${window.location.origin}/#/participant/${sessionId}`} size={100} />
                         </div>
                     ) : null
             }
@@ -166,6 +166,8 @@ function SessionPage() {
             </Box>
         </Paper>
     );
+
+    console.log(session)
 
     return (
         <Container maxWidth="xl">
@@ -277,11 +279,11 @@ function SessionPage() {
                     </Box>
 
 
-                    {/* <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Paper sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
                         <Typography variant="h5" gutterBottom>Data</Typography>
                         <Typography>Expected users: <b>?</b></Typography>
                         <Typography>Answers received: <b>?</b></Typography>
-                    </Paper> */}
+                    </Paper>
                 </Box>
             </Box>
         </Container>
