@@ -65,8 +65,8 @@ function PresetPage() {
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!active || !over || active.id === over.id || !preset) return;
-        const oldIndex = questionsOrder.indexOf(active.id);
-        const newIndex = questionsOrder.indexOf(over.id);
+        const oldIndex = questionsOrder.indexOf(active.id as string);
+        const newIndex = questionsOrder.indexOf(over.id as string);
         const newOrder = arrayMove(questionsOrder, oldIndex, newIndex);
         setQuestionsOrder(newOrder);
         // Reorder questions array and update Firestore
