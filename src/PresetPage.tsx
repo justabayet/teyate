@@ -36,7 +36,7 @@ import {
 import {
     Add as AddIcon,
     Delete as DeleteIcon,
-    Phone as PhoneIcon,
+    // Phone as PhoneIcon,
     DragHandle as DragHandleIcon
 } from '@mui/icons-material';
 type Answer = { id: string; text: string };
@@ -222,55 +222,55 @@ function PresetPage() {
         );
     }
 
-    const PhonePreview = () => {
-        let previewText = selectedQuestion ? selectedQuestion.text : '';
-        let previewAnswers = selectedQuestion ? selectedQuestion.answers : [];
-        // If editing, show live editData
-        if (selectedQuestion && editData && editData.text && editData.answers.length > 0) {
-            previewText = editData.text;
-            previewAnswers = editData.answers.map((text, index) => ({ id: 'a' + (index + 1), text }));
-        }
-        return (
-            <Paper
-                sx={{
-                    p: 2,
-                    height: '600px',
-                    width: '300px',
-                    mx: 'auto',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    bgcolor: '#f5f5f5'
-                }}
-            >
-                <Box sx={{ flex: 1, overflow: 'auto' }}>
-                    {selectedQuestion ? (
-                        <>
-                            <Typography variant="h6" gutterBottom>
-                                {previewText}
-                            </Typography>
-                            <Box sx={{ mt: 2 }}>
-                                {previewAnswers.map(answer => (
-                                    <Button
-                                        key={answer.id}
-                                        variant="outlined"
-                                        disabled
-                                        fullWidth
-                                        sx={{ mb: 1 }}
-                                    >
-                                        {answer.text}
-                                    </Button>
-                                ))}
-                            </Box>
-                        </>
-                    ) : (
-                        <Typography color="textSecondary" align="center">
-                            Select a question to preview
-                        </Typography>
-                    )}
-                </Box>
-            </Paper>
-        );
-    };
+    // const PhonePreview = () => {
+    //     let previewText = selectedQuestion ? selectedQuestion.text : '';
+    //     let previewAnswers = selectedQuestion ? selectedQuestion.answers : [];
+    //     // If editing, show live editData
+    //     if (selectedQuestion && editData && editData.text && editData.answers.length > 0) {
+    //         previewText = editData.text;
+    //         previewAnswers = editData.answers.map((text, index) => ({ id: 'a' + (index + 1), text }));
+    //     }
+    //     return (
+    //         <Paper
+    //             sx={{
+    //                 p: 2,
+    //                 height: '600px',
+    //                 width: '300px',
+    //                 mx: 'auto',
+    //                 display: 'flex',
+    //                 flexDirection: 'column',
+    //                 bgcolor: '#f5f5f5'
+    //             }}
+    //         >
+    //             <Box sx={{ flex: 1, overflow: 'auto' }}>
+    //                 {selectedQuestion ? (
+    //                     <>
+    //                         <Typography variant="h6" gutterBottom>
+    //                             {previewText}
+    //                         </Typography>
+    //                         <Box sx={{ mt: 2 }}>
+    //                             {previewAnswers.map(answer => (
+    //                                 <Button
+    //                                     key={answer.id}
+    //                                     variant="outlined"
+    //                                     disabled
+    //                                     fullWidth
+    //                                     sx={{ mb: 1 }}
+    //                                 >
+    //                                     {answer.text}
+    //                                 </Button>
+    //                             ))}
+    //                         </Box>
+    //                     </>
+    //                 ) : (
+    //                     <Typography color="textSecondary" align="center">
+    //                         Select a question to preview
+    //                     </Typography>
+    //                 )}
+    //             </Box>
+    //         </Paper>
+    //     );
+    // };
 
     return (
         <Container maxWidth="lg">
@@ -283,9 +283,9 @@ function PresetPage() {
                     <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>
                 )}
 
-                <Box sx={{ display: 'grid', gap: { xs: 1, md: 4 }, gridTemplateColumns: '1fr 2fr 1fr' }}>
+                <Box sx={{ display: 'grid', gap: { xs: 1, md: 4 }, gridTemplateColumns: '1fr 2fr' }}>
                     {/* Questions List */}
-                    <Paper sx={{ p: 2, height: '600px', display: 'flex', flexDirection: 'column' }}>
+                    <Paper sx={{ p: 2, height: '600px', display: 'flex', flexDirection: 'column', minWidth: '300px' }}>
                         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Typography variant="h6">Questions</Typography>
                             <Typography variant="body2">{preset.questions.length}</Typography>
@@ -332,6 +332,7 @@ function PresetPage() {
                                             size="small"
                                             fullWidth
                                             value={answer}
+                                            multiline
                                             onChange={(e) => {
                                                 const newAnswers = [...editData.answers];
                                                 newAnswers[index] = e.target.value;
@@ -377,10 +378,10 @@ function PresetPage() {
                     </Paper>
 
                     {/* Phone Preview */}
-                    <Box sx={{ position: 'relative' }}>
+                    {/* <Box sx={{ position: 'relative' }}>
                         <PhoneIcon sx={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', color: 'primary.main' }} />
                         <PhonePreview />
-                    </Box>
+                    </Box> */}
                 </Box>
             </Box>
         </Container>

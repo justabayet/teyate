@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import './App.css'
-import HomePage from './HomePage'
+import LoginPage from './LoginPage';
 import ParticipantPage from './ParticipantPage'
 import DirectorPage from './DirectorPage'
 import PresetPage from './PresetPage'
@@ -27,7 +27,6 @@ function AppContent() {
           element={
             <Navigation>
               <Routes>
-                <Route path="/" element={<Navigate to="/presets" replace />} />
                 <Route path="/presets" element={<DirectorPage />} />
                 <Route path="/presets/:presetId" element={<PresetPage />} />
                 <Route path="/sessions" element={<SessionsPage />} />
@@ -40,11 +39,11 @@ function AppContent() {
           <Route path="/*" />
         </Route>
       ) : (
-        <>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/join/:sessionId" element={<ParticipantPage />} />
+        <Route>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </>
+        </Route>
       )}
     </Routes>
   );
