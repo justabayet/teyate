@@ -1,48 +1,68 @@
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import './App.css'
-import HomePage from './HomePage'
-import MyComponent from './MyComponent'
+import LoginPage from './LoginPage';
 import ParticipantPage from './ParticipantPage'
 import DirectorPage from './DirectorPage'
-import { useSessionId } from './useSessionId'
+import PresetPage from './PresetPage'
+import SessionsPage from './SessionsPage'
+import SessionPage from './SessionPage'
 import { AuthProvider, useAuth } from './auth'
+import Navigation from './Navigation';
+import theme from './theme';
+import ProjectorPage from './ProjectorPage';
 
-function AppContent({ sessionId }: { sessionId: string | null }) {
+function AppContent() {
   const { user } = useAuth();
+  const { sessionId } = useParams();
 
   if (sessionId) {
-    return (
-      <>
-        <MyComponent />
-        <ParticipantPage />
-      </>
-    );
-  }
-
-  if (user) {
-    return (
-      <>
-        <MyComponent />
-        <DirectorPage />
-      </>
-    );
+    return <ParticipantPage />;
   }
 
   return (
-    <>
-      <MyComponent />
-      <HomePage />
-    </>
+    <Routes>
+      <Route path="/projector/:sessionId" element={<ProjectorPage />} />
+      <Route path="/participant/:sessionId" element={<ParticipantPage />} />
+      {user ? (
+        <Route
+          element={
+            <Navigation>
+              <Routes>
+                <Route path="/presets" element={<DirectorPage />} />
+                <Route path="/presets/:presetId" element={<PresetPage />} />
+                <Route path="/sessions" element={<SessionsPage />} />
+                <Route path="/sessions/:sessionId" element={<SessionPage />} />
+                <Route path="/projector/:sessionId" element={<ProjectorPage />} />
+                <Route path="*" element={<Navigate to="/presets" replace />} />
+              </Routes>
+            </Navigation>
+          }
+        >
+          <Route path="/*" />
+        </Route>
+      ) : (
+        <Route>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      )}
+    </Routes>
   );
 }
 
 function App() {
-  const sessionId = useSessionId()
-
   return (
-    <AuthProvider>
-      <AppContent sessionId={sessionId} />
-    </AuthProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
-export default App
+export default App;
