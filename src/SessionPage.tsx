@@ -22,26 +22,10 @@ import {
     Stop as StopIcon,
     OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
-
-const WAITING_SCREEN_INDEX = -1;
-const END_SCREEN_INDEX = -3;
-const SHOW_RESULTS_INDEX = -2;
-
-const getQuestion = (index: number | undefined, questions: Question[]) => {
-    if (index === WAITING_SCREEN_INDEX) {
-        return { id: 'waiting', text: 'Waiting Screen', answers: [] };
-    } else if (index === END_SCREEN_INDEX) {
-        return { id: 'end', text: 'End Screen', answers: [] };
-    } else if (index === SHOW_RESULTS_INDEX) {
-        return { id: 'results', text: 'Results Screen', answers: [] };
-    } else if (index !== undefined && questions) {
-        return questions[index] || null;
-    }
-    return null;
-}
+import { END_SCREEN_INDEX, getQuestion, SHOW_RESULTS_INDEX, WAITING_SCREEN_INDEX } from './questions';
 
 type Answer = { id: string; text: string };
-type Question = { id: string; text: string; answers: Answer[] };
+export type Question = { id: string; text: string; answers: Answer[] };
 type Preset = { id: string; name: string; directorId: string; questions: Question[] };
 type Session = {
     id: string;
@@ -177,7 +161,7 @@ function SessionPage() {
 
     return (
         <Container maxWidth="xl">
-            <Box sx={{ py: 4 }}>
+            <Box sx={{ py: 8 }}>
                 <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: '2fr 2fr' } }}>
 
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>

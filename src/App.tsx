@@ -11,6 +11,7 @@ import { useSessionId } from './useSessionId'
 import { AuthProvider, useAuth } from './auth'
 import Navigation from './Navigation';
 import theme from './theme';
+import ProjectorPage from './ProjectorPage';
 
 function AppContent() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ function AppContent() {
 
   return (
     <Routes>
+      <Route path="/projector/:sessionId" element={<ProjectorPage />} />
       {user ? (
         <Route
           element={
@@ -31,6 +33,7 @@ function AppContent() {
                 <Route path="/presets/:presetId" element={<PresetPage />} />
                 <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/sessions/:sessionId" element={<SessionPage />} />
+                <Route path="/projector/:sessionId" element={<ProjectorPage />} />
                 <Route path="*" element={<Navigate to="/presets" replace />} />
               </Routes>
             </Navigation>
