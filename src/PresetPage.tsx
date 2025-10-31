@@ -1,4 +1,18 @@
 import { useEffect, useState } from 'react';
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useParams } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
@@ -21,7 +35,8 @@ import {
 import {
     Add as AddIcon,
     Delete as DeleteIcon,
-    Phone as PhoneIcon
+    Phone as PhoneIcon,
+    DragHandle as DragHandleIcon
 } from '@mui/icons-material';
 type Answer = { id: string; text: string };
 type Question = { id: string; text: string; answers: Answer[] };
@@ -36,6 +51,72 @@ function PresetPage() {
     const [error, setError] = useState<string | null>(null);
     const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
     const [editData, setEditData] = useState<{ text: string; answers: string[] }>({ text: '', answers: ['Yes', 'No'] });
+
+
+    const sensors = useSensors(useSensor(PointerSensor));
+    const [questionsOrder, setQuestionsOrder] = useState<string[]>([]);
+    useEffect(() => {
+        if (preset) {
+            setQuestionsOrder(preset.questions.map(q => q.id));
+        }
+    }, [preset]);
+
+    const handleDragEnd = (event: any) => {
+        const { active, over } = event;
+        if (!active || !over || active.id === over.id || !preset) return;
+        const oldIndex = questionsOrder.indexOf(active.id);
+        const newIndex = questionsOrder.indexOf(over.id);
+        const newOrder = arrayMove(questionsOrder, oldIndex, newIndex);
+        setQuestionsOrder(newOrder);
+        // Reorder questions array and update Firestore
+        const reorderedQuestions = newOrder.map(id => preset.questions.find(q => q.id === id)!);
+        updateDoc(doc(db, 'presets', preset.id), { questions: reorderedQuestions });
+        setPreset({ ...preset, questions: reorderedQuestions });
+    };
+
+    function SortableQuestion({ question, index }: { question: Question, index: number }) {
+        const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: question.id });
+        return (
+            <ListItem
+                ref={setNodeRef}
+                {...attributes}
+                onClick={() => setSelectedQuestion(question)}
+                sx={{
+                    cursor: 'pointer',
+                    bgcolor: selectedQuestion?.id === question.id ? 'action.selected' : undefined,
+                    boxShadow: isDragging ? 4 : undefined,
+                    transform: CSS.Transform.toString(transform),
+                    transition
+                }}
+            >
+                <ListItemText
+                    primary={`${index + 1}. ${question.text.substring(0, QUESTION_NB_CHAR)}${question.text.length > QUESTION_NB_CHAR ? '...' : ''}`}
+                    sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                />
+                <IconButton
+                    edge="end"
+                    size="small"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteQuestion(question.id);
+                    }}
+                    sx={{ ml: 1 }}
+                >
+                    <DeleteIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                    size="small"
+                    {...listeners}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteQuestion(question.id);
+                    }}
+                >
+                    <DragHandleIcon fontSize="small" />
+                </IconButton>
+            </ListItem>
+        );
+    }
 
     useEffect(() => {
         if (!presetId) return;
@@ -209,45 +290,18 @@ function PresetPage() {
                             <Typography variant="body2">{preset.questions.length}</Typography>
                         </Box>
                         <List sx={{ flex: 1, overflow: 'auto' }}>
-                            {preset.questions.map((question, index) => (
-                                <ListItem
-                                    key={question.id}
-                                    onClick={() => setSelectedQuestion(question)}
-                                    sx={{ cursor: 'pointer', bgcolor: selectedQuestion?.id === question.id ? 'action.selected' : undefined }}
-                                >
-                                    <ListItemText
-                                        primary={`${index + 1}. ${question.text.substring(0, QUESTION_NB_CHAR)}${question.text.length > QUESTION_NB_CHAR ? '...' : ''}`}
-                                        sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                                    />
-                                    <ListItemSecondaryAction>
-                                        <IconButton
-                                            edge="end"
-                                            size="small"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteQuestion(question.id);
-                                            }}
-                                            sx={{ ml: 1 }}
-                                        >
-                                            <DeleteIcon fontSize="small" />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                </ListItem>
-                            ))}
-
-                            <ListItem
-                                key={'add-question'}
-                                onClick={() => handleAddQuestion()}
-                            // sx={{ cursor: 'pointer', bgcolor: selectedQuestion?.id === question.id ? 'action.selected' : undefined }}
-                            >
-                                <Button
-                                    startIcon={<AddIcon />}
-                                    onClick={() => setEditData({ ...editData, answers: [...editData.answers, ''] })}
-                                    sx={{ mt: 1 }}
-                                >
-                                    Question
-                                </Button>
-                            </ListItem>
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                <SortableContext items={questionsOrder} strategy={verticalListSortingStrategy}>
+                                    {questionsOrder.map((id, index) => {
+                                        const question = preset.questions.find(q => q.id === id);
+                                        if (!question) return null;
+                                        return <SortableQuestion key={question.id} question={question} index={index} />;
+                                    })}
+                                    <ListItem key={'add-question'} onClick={() => handleAddQuestion()}>
+                                        <Button startIcon={<AddIcon />} sx={{ mt: 1 }}>Question</Button>
+                                    </ListItem>
+                                </SortableContext>
+                            </DndContext>
                         </List>
                     </Paper>
 
