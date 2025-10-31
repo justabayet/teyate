@@ -45,6 +45,7 @@ type Preset = { id: string; name: string; directorId: string; questions: Questio
 
 const QUESTION_NB_CHAR = 15
 function PresetPage() {
+
     const { presetId } = useParams();
     useAuth(); // Ensure user is authenticated
     const [preset, setPreset] = useState<Preset | null>(null);
@@ -53,6 +54,32 @@ function PresetPage() {
     const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
     const [editData, setEditData] = useState<{ text: string; answers: string[] }>({ text: '', answers: ['Yes', 'No'] });
 
+
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [titleValue, setTitleValue] = useState('');
+
+    useEffect(() => {
+        if (preset) setTitleValue(preset.name);
+    }, [preset]);
+
+    const handleTitleEdit = () => {
+        setEditingTitle(true);
+    };
+
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setTitleValue(e.target.value);
+    };
+
+    const handleTitleSave = async () => {
+        if (!preset || !titleValue.trim() || titleValue === preset.name) {
+            setEditingTitle(false);
+            setTitleValue(preset?.name || '');
+            return;
+        }
+        await updateDoc(doc(db, 'presets', preset.id), { name: titleValue.trim() });
+        setPreset({ ...preset, name: titleValue.trim() });
+        setEditingTitle(false);
+    };
 
     const sensors = useSensors(useSensor(PointerSensor));
     const [questionsOrder, setQuestionsOrder] = useState<string[]>([]);
@@ -275,9 +302,35 @@ function PresetPage() {
     return (
         <Container maxWidth="lg">
             <Box sx={{ py: 4 }}>
-                <Typography variant="h4" gutterBottom>
-                    {preset.name}
-                </Typography>
+                {editingTitle ? (
+                    <TextField
+                        value={titleValue}
+                        onChange={handleTitleChange}
+                        onBlur={handleTitleSave}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                                handleTitleSave();
+                            } else if (e.key === 'Escape') {
+                                setEditingTitle(false);
+                                setTitleValue(preset?.name || '');
+                            }
+                        }}
+                        autoFocus
+                        variant="outlined"
+                        size="small"
+                        sx={{ mb: 2, fontSize: 32, fontWeight: 'bold' }}
+                        inputProps={{ style: { fontSize: 32, fontWeight: 'bold' } }}
+                    />
+                ) : (
+                    <Typography
+                        variant="h4"
+                        gutterBottom
+                        sx={{ cursor: 'pointer', fontWeight: 'bold' }}
+                        onClick={handleTitleEdit}
+                    >
+                        {preset.name}
+                    </Typography>
+                )}
 
                 {error && (
                     <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>
