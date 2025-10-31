@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, query, where } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
 import {
@@ -9,7 +9,6 @@ import {
     Typography,
     Paper,
     Button,
-    IconButton,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -18,19 +17,14 @@ import {
     List,
     ListItem,
     ListItemText,
-    ListItemSecondaryAction,
     CircularProgress,
     Alert,
     Select,
     MenuItem,
     FormControl,
     InputLabel,
-    Chip,
 } from '@mui/material';
 import {
-    PlayArrow as PlayIcon,
-    Stop as StopIcon,
-    Delete as DeleteIcon,
     Add as AddIcon,
 } from '@mui/icons-material';
 
@@ -143,26 +137,6 @@ function SessionsPage() {
         }
     };
 
-    const handleDeleteSession = async (sessionId: string) => {
-        if (!window.confirm('Are you sure you want to delete this session?')) return;
-
-        try {
-            await deleteDoc(doc(db, 'sessions', sessionId));
-        } catch (err) {
-            setError('Failed to delete session: ' + (err as Error).message);
-        }
-    };
-
-    const handleToggleSession = async (session: Session) => {
-        try {
-            await updateDoc(doc(db, 'sessions', session.id), {
-                isActive: !session.isActive,
-            });
-        } catch (err) {
-            setError('Failed to update session: ' + (err as Error).message);
-        }
-    };
-
     if (loading) {
         return (
             <Container maxWidth="lg">
@@ -175,9 +149,10 @@ function SessionsPage() {
 
     return (
         <Container maxWidth="lg">
-            <Box sx={{ py: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h4">Sessions</Typography>
+            <Box sx={{ py: 4, minWidth: 300 }}>
+                <Typography variant="h4" gutterBottom>Sessions</Typography>
+
+                <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
                     <Button
                         variant="contained"
                         startIcon={<AddIcon />}
@@ -229,36 +204,9 @@ function SessionsPage() {
                                                     <span>
                                                         {preset?.name || 'Unknown preset'}
                                                     </span>
-                                                    <Chip
-                                                        label={session.isActive ? 'Active' : 'Inactive'}
-                                                        color={session.isActive ? 'success' : 'default'}
-                                                        size="small"
-                                                    />
                                                 </Box>
                                             }
                                         />
-                                        <ListItemSecondaryAction>
-                                            <IconButton
-                                                edge="end"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleSession(session);
-                                                }}
-                                                color={session.isActive ? 'error' : 'success'}
-                                            >
-                                                {session.isActive ? <StopIcon /> : <PlayIcon />}
-                                            </IconButton>
-                                            <IconButton
-                                                edge="end"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteSession(session.id);
-                                                }}
-                                                sx={{ ml: 1 }}
-                                            >
-                                                <DeleteIcon />
-                                            </IconButton>
-                                        </ListItemSecondaryAction>
                                     </ListItem>
                                 );
                             })

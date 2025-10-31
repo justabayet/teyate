@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, addDoc, query, where, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, doc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { useAuth } from './auth';
 import {
@@ -18,7 +18,6 @@ import {
 import {
     Add as AddIcon,
     Delete as DeleteIcon,
-    PlayArrow as StartIcon,
     Edit as EditIcon
 } from '@mui/icons-material';
 
@@ -97,42 +96,6 @@ function DirectorPage() {
         }
     };
 
-    const startSession = async (presetId: string) => {
-        try {
-            // Check for existing session with this preset and director
-            const sessionsCol = collection(db, 'sessions');
-            const q = query(sessionsCol, where('presetId', '==', presetId), where('directorId', '==', user.uid), where('isActive', '==', true));
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const snap = await new Promise<any>((resolve, reject) => {
-                onSnapshot(q, (snapshot) => resolve(snapshot), reject);
-            });
-            console.log(snap)
-            let sessionId = null;
-            if (snap && snap.docs && snap.docs.length > 0) {
-                sessionId = snap.docs[0].id;
-            }
-            if (sessionId) {
-                await updateDoc(doc(db, 'sessions', sessionId), { isActive: false });
-                navigate(`/sessions/${sessionId}`);
-                setError('Opened existing session.');
-            } else {
-                const sessionRef = await addDoc(sessionsCol, {
-                    presetId,
-                    directorId: user.uid,
-                    isActive: false,
-                    currentQuestionIndex: null,
-                    questionEndAt: null,
-                    name: "New Session",
-                    createdAt: new Date()
-                });
-                navigate(`/sessions/${sessionRef.id}`);
-                setError('Session started!');
-            }
-        } catch {
-            setError('Failed to start or open session');
-        }
-    };
-
     return (
         <Container maxWidth="lg">
             <Box sx={{ py: 4 }}>
@@ -192,14 +155,6 @@ function DirectorPage() {
                                     title="Edit Preset"
                                 >
                                     <EditIcon />
-                                </IconButton>
-                                <IconButton
-                                    size="small"
-                                    onClick={e => { e.stopPropagation(); startSession(preset.id); }}
-                                    color="primary"
-                                    title="Start Session"
-                                >
-                                    <StartIcon />
                                 </IconButton>
                                 <IconButton
                                     size="small"
