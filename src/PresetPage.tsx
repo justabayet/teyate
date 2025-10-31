@@ -4,7 +4,8 @@ import {
     closestCenter,
     PointerSensor,
     useSensor,
-    useSensors
+    useSensors,
+    type DragEndEvent
 } from '@dnd-kit/core';
 import {
     arrayMove,
@@ -13,6 +14,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { restrictToVerticalAxis, restrictToParentElement } from '@dnd-kit/modifiers';
 import { useParams } from 'react-router-dom';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from './firebase';
@@ -28,7 +30,6 @@ import {
     List,
     ListItem,
     ListItemText,
-    ListItemSecondaryAction,
     CircularProgress,
     Alert,
 } from '@mui/material';
@@ -61,7 +62,7 @@ function PresetPage() {
         }
     }, [preset]);
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!active || !over || active.id === over.id || !preset) return;
         const oldIndex = questionsOrder.indexOf(active.id);
@@ -290,18 +291,23 @@ function PresetPage() {
                             <Typography variant="body2">{preset.questions.length}</Typography>
                         </Box>
                         <List sx={{ flex: 1, overflow: 'auto' }}>
-                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                            >
                                 <SortableContext items={questionsOrder} strategy={verticalListSortingStrategy}>
                                     {questionsOrder.map((id, index) => {
                                         const question = preset.questions.find(q => q.id === id);
                                         if (!question) return null;
                                         return <SortableQuestion key={question.id} question={question} index={index} />;
                                     })}
-                                    <ListItem key={'add-question'} onClick={() => handleAddQuestion()}>
-                                        <Button startIcon={<AddIcon />} sx={{ mt: 1 }}>Question</Button>
-                                    </ListItem>
                                 </SortableContext>
                             </DndContext>
+                            <ListItem key={'add-question'} onClick={() => handleAddQuestion()}>
+                                <Button startIcon={<AddIcon />} sx={{ mt: 1 }}>Question</Button>
+                            </ListItem>
                         </List>
                     </Paper>
 

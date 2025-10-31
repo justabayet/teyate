@@ -50,7 +50,7 @@ function Navigation({ children }: NavigationProps) {
     const currentSection = location.pathname.split('/')[1] || 'presets';
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <AppBar position="fixed">
                 <Toolbar>
                     <Typography
